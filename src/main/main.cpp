@@ -13,31 +13,41 @@
 #include <NRF24L01Lib.h>
 #include <GenericClient.h>
 
+#include "Types.h"
+
 #define MANAGER_ID 00
 #define HUD_ID 01
+
+ManagerState::State managerState = ManagerState::WAITING;
+ManagerData managerData;
 
 RF24 radio(NRF_CE, NRF_CS);
 RF24Network network(radio);
 NRF24L01Lib nrf24;
 
-class HUDType
-{
-public:
-  unsigned long id;
-};
-
-GenericClient<HUDType, HUDType> managerClient(MANAGER_ID);
+GenericClient</*OUT*/ HUDResponse, /*IN*/ ManagerData> managerClient(MANAGER_ID);
 
 void managerClientPacketAvailable_cb(uint16_t from_id, uint8_t t)
 {
-  HUDType payload = managerClient.read();
-  Serial.printf("Rx packet from Manager: %d\n", payload.id);
+  ManagerData payload = managerClient.read();
+
+  if (payload.id != managerData.id)
+  {
+    // new data
+    if (payload.state != managerData.state)
+    {
+      // state changed
+      Serial.printf("ManagerState changed: %s\n", ManagerState::getState(payload.state));
+      managerData = payload;
+    }
+  }
+  // Serial.printf("Rx packet from Manager: %d\n", payload.id);
 }
 
 bool sendPacketToManager(bool print)
 {
-  HUDType data;
-  data.id = 0;
+  HUDResponse data;
+  data.id = managerData.id;
 
   bool success = managerClient.sendTo(0, data);
 
@@ -75,7 +85,7 @@ void loop()
     }
     else
     {
-      Serial.printf("Send packet to manager OK\n");
+      // Serial.printf("Send packet to manager OK\n");
     }
   }
 
