@@ -40,14 +40,23 @@ namespace ManagerState
   }
 }
 
+namespace HUD
+{
+  enum Action
+  {
+    NONE,
+    BUTTON_CLICKED,
+  };
+  struct Packet
+  {
+    unsigned long id;
+    HUD::Action action;
+  } response;
+}
+
 class ManagerData
 {
 public:
   unsigned long id;
   ManagerState::State state;
 };
-
-struct HUDResponse
-{
-  unsigned long id;
-} response;
