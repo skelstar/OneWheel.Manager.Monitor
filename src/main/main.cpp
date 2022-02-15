@@ -10,11 +10,11 @@
 
 #include <RF24.h>
 #include <RF24Network.h>
-#include <NRF24L01Lib.h>
-#include <GenericClient.h>
 #include <Button2.h>
 
 #include "Types.h"
+
+#include <M5Stack.h>
 
 #define MANAGER_ID 00
 #define HUD_ID 01
@@ -26,50 +26,72 @@ elapsedMillis since_sent_to_manager = 0;
 
 RF24 radio(NRF_CE, NRF_CS);
 RF24Network network(radio);
-NRF24L01Lib nrf24;
 
-GenericClient</*OUT*/ HUD::Packet, /*IN*/ ManagerData> managerClient(MANAGER_ID);
-
-void managerClientPacketAvailable_cb(uint16_t from_id, uint8_t t)
+void handlePacket(ManagerData *data)
 {
-  ManagerData payload = managerClient.read();
+  bool state_changed = managerData.state != data->state;
 
-  if (payload.id != managerData.id)
+  if (state_changed)
   {
-    // new data
-    if (payload.state != managerData.state)
+    switch (data->state)
     {
-      // state changed
-      Serial.printf("ManagerState changed: %s\n", ManagerState::getState(payload.state));
-      managerData = payload;
+    case ManagerState::RUNNING:
+      M5.Speaker.beep();
+      break;
+    case ManagerState::DUTYCYCLE_WARNING:
+      break;
+    case ManagerState::DUTYCYCLE_LIMIT:
+      break;
+    case ManagerState::REVERSE_STOP:
+      M5.Speaker.beep();
+      break;
+    case ManagerState::BOTH_FEET_ON_PAD:
+      break;
+    case ManagerState::WAITING:
+    case ManagerState::HEARTBEAT:
+    case ManagerState::ONE_FOOT_ON_PAD:
+      break;
+    default:
+      Serial.printf("Not handling ManagerData.state %d\n", data->state);
     }
   }
-  // Serial.printf("Rx packet from Manager: %d\n", payload.id);
+
+  managerData.id = data->id;
+  managerData.state = data->state;
 }
 
-bool sendPacketToManager(bool print)
+bool sendPacket(HUD::Packet *packet, uint8_t type)
 {
-  HUD::Packet packet;
-  packet.id = managerData.id;
-  packet.action = HUD::Action::NONE;
+  uint8_t len = sizeof(HUD::Packet);
+  uint8_t bs[len];
+  memcpy(bs, packet, len);
+  RF24NetworkHeader header(MANAGER_ID, type);
 
-  bool success = managerClient.sendTo(0, packet);
+  bool connected = network.write(header, bs, len);
 
-  return success;
+  // if (_sentPacketCallback != nullptr)
+  //   _sentPacketCallback(data);
+
+  return connected;
 }
 
-Button2 button;
+#include "Utils.h"
 
-#define BUTTON_PIN 35
+// Button2 button;
 
-void buttonClick_handler(Button2 &btn)
-{
-  Serial.printf("Button clicked\n");
-  HUD::Packet packet;
-  packet.action = HUD::Action::BUTTON_CLICKED;
-  managerClient.sendTo(1, packet);
-  since_sent_to_manager = 0;
-}
+// #define BUTTON_PIN 35
+
+// void buttonClick_handler(Button2 &btn)
+// {
+//   Serial.printf("Button clicked\n");
+//   HUD::Packet packet;
+//   packet.action = HUD::Action::BUTTON_CLICKED;
+
+//   if (sendPacket(&packet, 1))
+//   {
+//     since_sent_to_manager = 0;
+//   }
+// }
 
 //------------------------------------------------------------------
 
@@ -78,38 +100,53 @@ void setup()
   Serial.begin(115200);
   Serial.printf("------------------------ BOOT ------------------------\n");
 
-  nrf24.begin(&radio, &network, HUD_ID, /*cb*/ nullptr, /*multicast*/ false, /*print radio details*/ true);
+  // button.begin(BUTTON_PIN);
+  // button.setPressedHandler(buttonClick_handler);
 
-  button.begin(BUTTON_PIN);
-  button.setPressedHandler(buttonClick_handler);
+  NRF::setup(true);
 
-  managerClient.begin(&network, managerClientPacketAvailable_cb);
-  Serial.printf("managerClient ready\n");
+  LEDs::setup();
 
-  vTaskDelay(100);
+  M5.begin(/*lcd enable*/ false);
+
+  M5.Speaker.tone(NOTE_DH2, 200);
+
+  LEDs::setPixels(LEDs::COLOUR_RED);
+
+  Buttons::setup();
 }
 //---------------------------------------------------------------
 
+bool manager_online = false;
+
 void loop()
 {
-  managerClient.update();
+  NRF::update();
 
-  button.loop();
+  Beeper::update();
 
-  if (since_sent_to_manager > 1000)
+  Buttons::update();
+
+  if (since_sent_to_manager > 500)
   {
     since_sent_to_manager = 0;
-    if (!sendPacketToManager(true))
+
+    bool _online = manager_online;
+    HUD::Packet packet;
+    packet.id++;
+    packet.action = HUD::Action::NONE;
+    manager_online = sendPacket(&packet, 0);
+
+    if (_online != manager_online)
     {
-      Serial.printf("Send packet to manager failed\n");
-    }
-    else
-    {
-      // Serial.printf("Send packet to manager OK\n");
+      _online = manager_online;
+      LEDs::setPixels(manager_online
+                          ? LEDs::COLOUR_GREEN
+                          : LEDs::COLOUR_RED);
     }
   }
 
-  vTaskDelay(10);
+  delay(10);
 }
 
 //------------------------------------------------------------------

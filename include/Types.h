@@ -10,8 +10,8 @@ namespace ManagerState
     DUTYCYCLE_LIMIT,
     DUTYCYCLE_WARNING,
     REVERSE_STOP,
-    ONE_FOOTPAD_SENSOR_NOT_READING,
-    BOTH_FOOTPAD_SENSORS_NOT_READING,
+    ONE_FOOT_ON_PAD,
+    BOTH_FEET_ON_PAD,
   } State;
 
   static const char *getState(uint8_t state)
@@ -30,10 +30,10 @@ namespace ManagerState
       return "DUTYCYCLE_WARNING";
     case REVERSE_STOP:
       return "REVERSE_STOP";
-    case ONE_FOOTPAD_SENSOR_NOT_READING:
-      return "ONE_FOOTPAD_SENSOR_NOT_READING";
-    case BOTH_FOOTPAD_SENSORS_NOT_READING:
-      return "BOTH_FOOTPAD_SENSORS_NOT_READING";
+    case ONE_FOOT_ON_PAD:
+      return "ONE_FOOT_ON_PAD";
+    case BOTH_FEET_ON_PAD:
+      return "BOTH_FEET_ON_PAD";
     default:
       return "Unknown ManagerState!";
     }
@@ -45,13 +45,33 @@ namespace HUD
   enum Action
   {
     NONE,
-    BUTTON_CLICKED,
+    BUTTON_A_CLICKED,
+    BUTTON_B_CLICKED,
+    BUTTON_C_CLICKED,
   };
+
+  static const char *getAction(uint8_t action)
+  {
+    switch (action)
+    {
+    case NONE:
+      return "NONE";
+    case BUTTON_A_CLICKED:
+      return "BUTTON_A_CLICKED";
+    case BUTTON_B_CLICKED:
+      return "BUTTON_B_CLICKED";
+    case BUTTON_C_CLICKED:
+      return "BUTTON_C_CLICKED";
+    default:
+      return "unhanded action";
+    }
+  }
+
   struct Packet
   {
     unsigned long id;
     HUD::Action action;
-  } response;
+  };
 }
 
 class ManagerData
