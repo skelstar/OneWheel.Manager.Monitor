@@ -11,6 +11,7 @@
 #include <RF24.h>
 #include <RF24Network.h>
 #include <Button2.h>
+#include <Pulser.h>
 
 #include "Types.h"
 
@@ -140,11 +141,20 @@ void loop()
     if (_online != manager_online)
     {
       _online = manager_online;
-      LEDs::setPixels(manager_online
-                          ? LEDs::COLOUR_GREEN
-                          : LEDs::COLOUR_RED);
+      if (manager_online)
+      {
+        LEDs::colour = LEDs::COLOUR_GREEN;
+        LEDs::leds.forever();
+      }
+      else
+      {
+        LEDs::colour = LEDs::COLOUR_RED;
+        LEDs::leds.forever(200, 1000);
+      }
     }
   }
+
+  LEDs::update();
 
   delay(10);
 }

@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
+#include <Pulser.h>
 
 #define NOTE_D0 -1
 #define NOTE_D1 294
@@ -124,14 +125,34 @@ namespace LEDs
 #define M5STACK_FIRE_NEO_NUM_LEDS 10
 #define M5STACK_FIRE_NEO_DATA_PIN 15
 
+  // prototypes
+  void pulse_cb(uint8_t state);
+
+  Pulser leds(pulse_cb);
+
   Adafruit_NeoPixel pixels = Adafruit_NeoPixel(M5STACK_FIRE_NEO_NUM_LEDS, M5STACK_FIRE_NEO_DATA_PIN, NEO_GRB + NEO_KHZ800);
 
   uint32_t COLOUR_RED = pixels.Color(PIXEL_BRIGHTNESS_MAX, 0, 0);
   uint32_t COLOUR_GREEN = pixels.Color(0, PIXEL_BRIGHTNESS_MAX, 0);
   uint32_t COLOUR_BLUE = pixels.Color(0, 0, PIXEL_BRIGHTNESS_MAX);
   uint32_t COLOUR_WHITE = pixels.Color(PIXEL_BRIGHTNESS_MAX / 2, PIXEL_BRIGHTNESS_MAX / 2, PIXEL_BRIGHTNESS_MAX / 2);
+  uint32_t COLOUR_BLACK = pixels.Color(0, 0, 0);
+
+  uint32_t colour = COLOUR_BLACK;
 
   void setPixels(uint32_t colour);
+
+  void pulse_cb(uint8_t state)
+  {
+    if (state == 1)
+    {
+      setPixels(colour);
+    }
+    else
+    {
+      setPixels(COLOUR_BLACK);
+    }
+  }
 
   void setup()
   {
@@ -146,6 +167,11 @@ namespace LEDs
       pixels.setPixelColor(i, colour);
     }
     pixels.show();
+  }
+
+  void update()
+  {
+    leds.update();
   }
 }
 //-----------------------------------------
