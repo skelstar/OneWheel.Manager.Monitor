@@ -18,6 +18,7 @@
 #include <M5Stack.h>
 
 #include <Tasks/NrfTask.h>
+#include <Tasks/DisplayTask.h>
 
 ManagerState::State managerState = ManagerState::WAITING;
 ManagerData managerData;
@@ -36,39 +37,6 @@ namespace Beeper
   Pulser beeper(beeper_cb);
 }
 
-void handlePacket(ManagerData *data)
-{
-  bool state_changed = managerData.state != data->state;
-
-  if (state_changed)
-  {
-    switch (data->state)
-    {
-    case ManagerState::RUNNING:
-      Beeper::beeper.pulses(Pulser::FAST_TWO);
-      break;
-    case ManagerState::DUTYCYCLE_WARNING:
-      break;
-    case ManagerState::DUTYCYCLE_LIMIT:
-      break;
-    case ManagerState::REVERSE_STOP:
-      Beeper::beeper.pulses(Pulser::ONE_LONG);
-      break;
-    case ManagerState::BOTH_FEET_ON_PAD:
-      break;
-    case ManagerState::WAITING:
-    case ManagerState::HEARTBEAT:
-    case ManagerState::ONE_FOOT_ON_PAD:
-      break;
-    default:
-      Serial.printf("Not handling ManagerData.state %d\n", data->state);
-    }
-  }
-
-  managerData.id = data->id;
-  managerData.state = data->state;
-}
-
 #include "Utils.h"
 
 //------------------------------------------------------------------
@@ -77,6 +45,8 @@ void setup()
 {
   Serial.begin(115200);
   Serial.printf("------------------------ BOOT ------------------------\n");
+
+  m5.begin();
 
   // button.begin(BUTTON_PIN);
   // button.setPressedHandler(buttonClick_handler);
@@ -94,6 +64,7 @@ void setup()
   Buttons::setup();
 
   NrfTask::createTask();
+  DisplayTask::createTask();
 }
 //---------------------------------------------------------------
 

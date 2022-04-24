@@ -16,25 +16,26 @@ namespace NrfTask
   const int HUD_ID = 01;
 
   elapsedMillis since_sent_to_manager = 0, since_printed_rx_packet;
-  int _lastSentId = 0;
 
   RF24 radio(NRF_CE, NRF_CS);
   RF24Network network(radio);
   NRF24L01Lib nrf24;
 
+  ManagerData packet;
+
   // prototypes
 
-  // GenericClient</*OUT*/ VescData, /*IN*/ VescData> nrfClient(/*to*/ MANAGER_ID);
-  GenericClient</*OUT*/ int, /*IN*/ int> *nrfClient;
+  // GenericClient</*OUT*/ VescData, /*IN*/ VescData> managerClient(/*to*/ MANAGER_ID);
+  GenericClient</*OUT*/ int, /*IN*/ ManagerData> *managerClient;
 
-  void nrfClientPacketAvailable_cb(uint16_t from_id, uint8_t t)
+  void managerClientPacketAvailable_cb(uint16_t from_id, uint8_t t)
   {
-    int data = nrfClient->read();
+    ManagerData data = managerClient->read();
 
     if (since_printed_rx_packet > 1000)
     {
       since_printed_rx_packet = 0;
-      Serial.printf("NRF received packet from Manager, id: %lu \n", data);
+      Serial.printf("NRF received packet from Manager, id: %lu \n", data.packet_id);
     }
   }
 
@@ -42,9 +43,9 @@ namespace NrfTask
   {
     nrf24.begin(&radio, &network, /*addr*/ HUD_ID, /*cb*/ nullptr, /*multicast*/ false, /*print radio details*/ true);
 
-    nrfClient = new GenericClient<int, int>(/*to*/ MANAGER_ID);
+    managerClient = new GenericClient<int, ManagerData>(/*to*/ MANAGER_ID);
 
-    nrfClient->begin(&network, nrfClientPacketAvailable_cb);
+    managerClient->begin(&network, managerClientPacketAvailable_cb);
   }
 
   void Task(void *pvParameters)
@@ -63,13 +64,14 @@ namespace NrfTask
       {
         since_sent_to_manager = 0;
 
-        bool success = nrfClient->sendTo(1, _lastSentId);
+        packet.packet_id++;
 
-        Serial.printf("Send to Manager %s, id: %lu \n", success ? "OK" : "FAIL", _lastSentId);
-        _lastSentId++;
+        bool success = managerClient->sendTo(1, _last_packet_id);
+
+        Serial.printf("Send to Manager %s, id: %lu \n", success ? "OK" : "FAIL", _last_packet_id++);
       }
 
-      nrfClient->update();
+      managerClient->update();
 
       vTaskDelay(1);
     }
