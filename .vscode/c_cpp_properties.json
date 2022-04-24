@@ -10,6 +10,7 @@
             "includePath": [
                 "e:/GitHubs/OneWheel/HUD/include",
                 "e:/GitHubs/OneWheel/HUD/src",
+                "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/BLE/src",
                 "e:/GitHubs/OneWheel/HUD/.pio/libdeps/M5STACKFIRE/Adafruit NeoPixel",
                 "e:/GitHubs/OneWheel/HUD/.pio/libdeps/M5STACKFIRE/M5Stack/src",
                 "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/SD/src",
@@ -97,7 +98,6 @@
                 "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/ArduinoOTA/src",
                 "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/AsyncUDP/src",
                 "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/AzureIoT/src",
-                "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/BLE/src",
                 "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/BluetoothSerial/src",
                 "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/DNSServer/src",
                 "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/EEPROM/src",
@@ -122,6 +122,7 @@
                 "path": [
                     "e:/GitHubs/OneWheel/HUD/include",
                     "e:/GitHubs/OneWheel/HUD/src",
+                    "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/BLE/src",
                     "e:/GitHubs/OneWheel/HUD/.pio/libdeps/M5STACKFIRE/Adafruit NeoPixel",
                     "e:/GitHubs/OneWheel/HUD/.pio/libdeps/M5STACKFIRE/M5Stack/src",
                     "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/SD/src",
@@ -209,7 +210,6 @@
                     "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/ArduinoOTA/src",
                     "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/AsyncUDP/src",
                     "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/AzureIoT/src",
-                    "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/BLE/src",
                     "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/BluetoothSerial/src",
                     "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/DNSServer/src",
                     "C:/Users/skels/.platformio/packages/framework-arduinoespressif32/libraries/EEPROM/src",
@@ -231,9 +231,13 @@
                 ]
             },
             "defines": [
-                "PLATFORMIO=50300",
+                "PLATFORMIO=50205",
                 "ARDUINO_M5STACK_FIRE",
                 "BOARD_HAS_PSRAM",
+                "PRINT_THIS=1",
+                "PULSE_FAST_ON_DURATION=50",
+                "PULSE_FAST_OFF_DURATION=100",
+                "PULSE_ONE_LONG_DURATION=800",
                 "NRF_CE=5",
                 "NRF_CS=13",
                 "IS_ESP32",

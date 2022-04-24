@@ -5,17 +5,30 @@
 
 typedef void (*SetOutputCallback)(uint8_t state);
 
+// override in platformio.ini
+// #define PULSE_FAST_ON_DURATION 50
+// #define PULSE_FAST_OFF_DURATION 150
+// #define PULSE_ONE_LONG_DURATION 800
+
 class Pulser
 {
 private:
   elapsedMillis _sincePulse;
   unsigned int _numPulses = 0;
   bool _forever = false;
-  ulong _onDuration = 0, _offDuration = 0;
   SetOutputCallback _setOutput_cb = nullptr;
   uint8_t _state = LOW;
 
 public:
+  enum PulsePattern
+  {
+    FAST_ONE,
+    FAST_TWO,
+    FAST_THREE,
+    ONE_LONG,
+  };
+
+  ulong _onDuration = 0, _offDuration = 0;
   Pulser(SetOutputCallback setOutput_cb, uint8_t initialState = LOW)
   {
     _setOutput_cb = setOutput_cb;
@@ -31,6 +44,28 @@ public:
     _sincePulse = 0;
     _state = initialState;
     _setOutput_cb(_state);
+  }
+
+  void pulses(PulsePattern pattern)
+  {
+    switch (pattern)
+    {
+    case FAST_ONE:
+      pulses(1, PULSE_FAST_ON_DURATION, PULSE_FAST_OFF_DURATION);
+      break;
+    case FAST_TWO:
+      pulses(2, PULSE_FAST_ON_DURATION, PULSE_FAST_OFF_DURATION);
+      break;
+    case FAST_THREE:
+      pulses(3, PULSE_FAST_ON_DURATION, PULSE_FAST_OFF_DURATION);
+      break;
+    case ONE_LONG:
+      pulses(1, PULSE_ONE_LONG_DURATION, 0);
+      break;
+    default:
+      Serial.printf("WARNING: unhandled pulse pattern: %d\n", pattern);
+      break;
+    }
   }
 
   void forever(ulong onDuration, ulong offDuration, uint8_t initialState = HIGH)

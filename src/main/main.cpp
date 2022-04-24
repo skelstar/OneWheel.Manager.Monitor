@@ -17,8 +17,7 @@
 
 #include <M5Stack.h>
 
-#define MANAGER_ID 00
-#define HUD_ID 01
+#include <Tasks/NrfTask.h>
 
 ManagerState::State managerState = ManagerState::WAITING;
 ManagerData managerData;
@@ -27,6 +26,15 @@ elapsedMillis since_sent_to_manager = 0;
 
 RF24 radio(NRF_CE, NRF_CS);
 RF24Network network(radio);
+
+#define NOTE_DH2 661
+
+namespace Beeper
+{
+  void beeper_cb(uint8_t state);
+
+  Pulser beeper(beeper_cb);
+}
 
 void handlePacket(ManagerData *data)
 {
@@ -37,14 +45,14 @@ void handlePacket(ManagerData *data)
     switch (data->state)
     {
     case ManagerState::RUNNING:
-      M5.Speaker.beep();
+      Beeper::beeper.pulses(Pulser::FAST_TWO);
       break;
     case ManagerState::DUTYCYCLE_WARNING:
       break;
     case ManagerState::DUTYCYCLE_LIMIT:
       break;
     case ManagerState::REVERSE_STOP:
-      M5.Speaker.beep();
+      Beeper::beeper.pulses(Pulser::ONE_LONG);
       break;
     case ManagerState::BOTH_FEET_ON_PAD:
       break;
@@ -61,38 +69,7 @@ void handlePacket(ManagerData *data)
   managerData.state = data->state;
 }
 
-bool sendPacket(HUD::Packet *packet, uint8_t type)
-{
-  uint8_t len = sizeof(HUD::Packet);
-  uint8_t bs[len];
-  memcpy(bs, packet, len);
-  RF24NetworkHeader header(MANAGER_ID, type);
-
-  bool connected = network.write(header, bs, len);
-
-  // if (_sentPacketCallback != nullptr)
-  //   _sentPacketCallback(data);
-
-  return connected;
-}
-
 #include "Utils.h"
-
-// Button2 button;
-
-// #define BUTTON_PIN 35
-
-// void buttonClick_handler(Button2 &btn)
-// {
-//   Serial.printf("Button clicked\n");
-//   HUD::Packet packet;
-//   packet.action = HUD::Action::BUTTON_CLICKED;
-
-//   if (sendPacket(&packet, 1))
-//   {
-//     since_sent_to_manager = 0;
-//   }
-// }
 
 //------------------------------------------------------------------
 
@@ -104,9 +81,9 @@ void setup()
   // button.begin(BUTTON_PIN);
   // button.setPressedHandler(buttonClick_handler);
 
-  NRF::setup(true);
-
   LEDs::setup();
+
+  Beeper::beeper.update();
 
   M5.begin(/*lcd enable*/ false);
 
@@ -115,6 +92,8 @@ void setup()
   LEDs::setPixels(LEDs::COLOUR_RED);
 
   Buttons::setup();
+
+  NrfTask::createTask();
 }
 //---------------------------------------------------------------
 
@@ -122,37 +101,37 @@ bool manager_online = false;
 
 void loop()
 {
-  NRF::update();
+  // NRF::update();
 
   Beeper::update();
 
   Buttons::update();
 
-  if (since_sent_to_manager > 500)
-  {
-    since_sent_to_manager = 0;
+  // if (since_sent_to_manager > 500)
+  // {
+  //   since_sent_to_manager = 0;
 
-    bool _online = manager_online;
-    HUD::Packet packet;
-    packet.id++;
-    packet.action = HUD::Action::NONE;
-    manager_online = sendPacket(&packet, 0);
+  //   bool _online = manager_online;
+  //   HUD::Packet packet;
+  //   packet.id++;
+  //   packet.action = HUD::Action::NONE;
+  //   manager_online = sendPacket(&packet, 0);
 
-    if (_online != manager_online)
-    {
-      _online = manager_online;
-      if (manager_online)
-      {
-        LEDs::colour = LEDs::COLOUR_GREEN;
-        LEDs::leds.forever();
-      }
-      else
-      {
-        LEDs::colour = LEDs::COLOUR_RED;
-        LEDs::leds.forever(200, 1000);
-      }
-    }
-  }
+  //   if (_online != manager_online)
+  //   {
+  //     _online = manager_online;
+  //     if (manager_online)
+  //     {
+  //       LEDs::colour = LEDs::COLOUR_GREEN;
+  //       LEDs::leds.forever();
+  //     }
+  //     else
+  //     {
+  //       LEDs::colour = LEDs::COLOUR_RED;
+  //       LEDs::leds.forever(200, 1000);
+  //     }
+  //   }
+  // }
 
   LEDs::update();
 

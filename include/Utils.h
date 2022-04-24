@@ -28,53 +28,6 @@
 #define NOTE_DH7 112
 
 //-----------------------------------------
-namespace NRF
-{
-  void managerClientPacketAvailable_cb(uint16_t from_id, uint8_t t);
-
-  void setup(bool printDetails)
-  {
-    radio.begin();
-    radio.setPALevel(RF24_PA_MAX);
-    radio.setDataRate(RF24_250KBPS);
-
-    network.begin(HUD_ID);
-    radio.flush_rx();
-    radio.flush_tx();
-
-    if (printDetails)
-      radio.printDetails(); // Dump the configuration of the rf unit for debugging
-  }
-
-  void update()
-  {
-    network.update();
-    if (network.available())
-    {
-      RF24NetworkHeader header;
-      network.peek(header);
-      managerClientPacketAvailable_cb(header.from_node, header.type);
-    }
-  }
-
-  void managerClientPacketAvailable_cb(uint16_t from_id, uint8_t t)
-  {
-    RF24NetworkHeader header;
-    ManagerData data;
-    uint8_t len = sizeof(ManagerData);
-    uint8_t buff[len];
-
-    network.read(header, buff, len);
-    memcpy(&data, &buff, len);
-
-    // Serial.printf("rx id: %lu| state: %s from Manager\n", data.id, ManagerState::getState(data.state));
-
-    handlePacket(&data);
-  }
-
-}
-
-//-----------------------------------------
 namespace Buttons
 {
   void sendAction(HUD::Action action)
@@ -83,11 +36,6 @@ namespace Buttons
 
     HUD::Packet packet;
     packet.action = action;
-
-    if (sendPacket(&packet, 1))
-    {
-      since_sent_to_manager = 0;
-    }
   }
 
   void setup()
@@ -113,9 +61,18 @@ namespace Buttons
 //-----------------------------------------
 namespace Beeper
 {
+  void beeper_cb(uint8_t state)
+  {
+    if (state == 1)
+    {
+      M5.Speaker.tone(NOTE_DH2, beeper._onDuration);
+    }
+  }
+
   void update()
   {
     M5.update();
+    beeper.update();
   }
 }
 
