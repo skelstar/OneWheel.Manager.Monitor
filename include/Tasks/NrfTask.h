@@ -22,6 +22,7 @@ namespace NRFTask
   NRF24L01Lib nrf24;
 
   ManagerData packet;
+  ManagerData *ptr = &packet;
 
   // prototypes
 
@@ -64,7 +65,9 @@ namespace NRFTask
 
           bool success = managerClient->sendTo(1, _last_packet_id);
 
-          Serial.printf("Send to Manager %s, id: %lu \n", success ? "OK" : "FAIL", _last_packet_id++);
+          if (!success)
+            Serial.printf("Send to Manager %s, id: %lu \n", success ? "OK" : "FAIL", _last_packet_id++);
+
           vTaskDelay(TICKS_10ms);
           xSemaphoreGive(semaphore_SPI);
           portEXIT_CRITICAL(&mmux);
@@ -88,16 +91,21 @@ namespace NRFTask
     if (xSemaphoreTake(semaphore_SPI, TICKS_50ms) == pdPASS)
     {
       portENTER_CRITICAL(&mmux);
-      ManagerData data = managerClient->read();
-      vTaskDelay(TICKS_10ms);
+
+      packet = managerClient->read();
+      ManagerData *ptr = &packet;
+
       xSemaphoreGive(semaphore_SPI);
-      xQueueOverwrite(xManagerDataQueue, (void *)&data);
+
+      xQueueOverwrite(xManagerDataQueue, (void *)&ptr);
+
       portEXIT_CRITICAL(&mmux);
 
       if (since_printed_rx_packet > 1000)
       {
         since_printed_rx_packet = 0;
-        Serial.printf("NRF received packet from Manager, id: %lu \n", data.packet_id);
+        Serial.printf("NRF received packet from Manager, id: %lu balanceState: %d \n",
+                      packet.packet_id, packet.balanceState);
       }
     }
     else

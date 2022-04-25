@@ -30,11 +30,6 @@
 //-----------------------------------------
 namespace Buttons
 {
-  void sendAction(HUD::Action action)
-  {
-    Serial.printf("Sending action: %s\n", HUD::getAction(action));
-  }
-
   void setup()
   {
   }
