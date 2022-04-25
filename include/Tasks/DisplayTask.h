@@ -8,11 +8,11 @@
 #include <NRF24L01Lib.h>
 
 #include <Types.h>
-#include <M5Stack.h>
 
 namespace DisplayTask
 {
   ManagerData packet;
+  elapsedMillis since_printed_queue_read = 0;
 
   const int LCD_WIDTH = 320;
   const int LCD_HEIGHT = 240;
@@ -27,9 +27,24 @@ namespace DisplayTask
 
   void setup()
   {
-    m5.Lcd.setTextDatum(MC_DATUM);
-    m5.Lcd.setTextSize(LCD_MED_FONT);
-    m5.Lcd.drawString("READY", LCD_WIDTH / 2, LCD_HEIGHT / 2, 2);
+    if (xSemaphoreTake(semaphore_SPI, TICKS_50ms) == pdPASS)
+    {
+      portENTER_CRITICAL(&mmux);
+
+      m5.Lcd.setTextSize(2);
+      m5.Lcd.setTextColor(TFT_BLUE);
+      m5.Lcd.setTextDatum(MC_DATUM);
+      m5.Lcd.setTextSize(LCD_MED_FONT);
+      m5.Lcd.drawString("READY", LCD_WIDTH / 2, LCD_HEIGHT / 2, 2);
+
+      xSemaphoreGive(semaphore_SPI);
+
+      portEXIT_CRITICAL(&mmux);
+    }
+    else
+    {
+      Serial.printf("Failed to take semaphore: %s \n", __func__);
+    }
   }
 
   void Task(void *pvParameters)
@@ -44,6 +59,19 @@ namespace DisplayTask
     // work
     for (;;)
     {
+      if (xQueuePeek(xManagerDataQueue, &packet, TICKS_50ms))
+      {
+        bool newPacket = packet.packet_id != _last_packet_id;
+        if (newPacket)
+        {
+          _last_packet_id = packet.packet_id;
+          if (since_printed_queue_read > 1000)
+          {
+            since_printed_queue_read = 0;
+            Serial.printf("ManagerData queue id: %lu\n", packet.packet_id);
+          }
+        }
+      }
 
       vTaskDelay(1);
     }

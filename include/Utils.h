@@ -33,9 +33,6 @@ namespace Buttons
   void sendAction(HUD::Action action)
   {
     Serial.printf("Sending action: %s\n", HUD::getAction(action));
-
-    HUD::Packet packet;
-    packet.action = action;
   }
 
   void setup()
@@ -44,18 +41,18 @@ namespace Buttons
 
   void update()
   {
-    if (M5.BtnA.wasPressed())
-    {
-      sendAction(HUD::BUTTON_A_CLICKED);
-    }
-    else if (M5.BtnB.wasPressed())
-    {
-      sendAction(HUD::BUTTON_B_CLICKED);
-    }
-    else if (M5.BtnC.wasPressed())
-    {
-      sendAction(HUD::BUTTON_C_CLICKED);
-    }
+    // if (M5.BtnA.wasPressed())
+    // {
+    //   sendAction(HUD::BUTTON_A_CLICKED);
+    // }
+    // else if (M5.BtnB.wasPressed())
+    // {
+    //   sendAction(HUD::BUTTON_B_CLICKED);
+    // }
+    // else if (M5.BtnC.wasPressed())
+    // {
+    //   sendAction(HUD::BUTTON_C_CLICKED);
+    // }
   }
 }
 //-----------------------------------------

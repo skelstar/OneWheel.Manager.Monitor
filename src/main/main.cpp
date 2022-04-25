@@ -17,11 +17,14 @@
 
 #include <M5Stack.h>
 
+QueueHandle_t xManagerDataQueue;
+
+SemaphoreHandle_t semaphore_SPI;
+
+portMUX_TYPE mmux = portMUX_INITIALIZER_UNLOCKED;
+
 #include <Tasks/NrfTask.h>
 #include <Tasks/DisplayTask.h>
-
-ManagerState::State managerState = ManagerState::WAITING;
-ManagerData managerData;
 
 elapsedMillis since_sent_to_manager = 0;
 
@@ -46,7 +49,13 @@ void setup()
   Serial.begin(115200);
   Serial.printf("------------------------ BOOT ------------------------\n");
 
-  m5.begin();
+  xManagerDataQueue = xQueueCreate(1, sizeof(ManagerData *));
+
+  semaphore_SPI = xSemaphoreCreateMutex();
+
+  m5.begin(/*LCDEnable*/ true, /*SDEnable*/ false, /*SerialEnable*/ false, /*I2CEnable*/ false);
+
+  // m5.begin(true, false, false, false);
 
   // button.begin(BUTTON_PIN);
   // button.setPressedHandler(buttonClick_handler);
@@ -55,15 +64,13 @@ void setup()
 
   Beeper::beeper.update();
 
-  M5.begin(/*lcd enable*/ false);
-
-  M5.Speaker.tone(NOTE_DH2, 200);
+  m5.Speaker.tone(NOTE_DH2, 200);
 
   LEDs::setPixels(LEDs::COLOUR_RED);
 
   Buttons::setup();
 
-  NrfTask::createTask();
+  NRFTask::createTask();
   DisplayTask::createTask();
 }
 //---------------------------------------------------------------
@@ -72,37 +79,9 @@ bool manager_online = false;
 
 void loop()
 {
-  // NRF::update();
-
   Beeper::update();
 
   Buttons::update();
-
-  // if (since_sent_to_manager > 500)
-  // {
-  //   since_sent_to_manager = 0;
-
-  //   bool _online = manager_online;
-  //   HUD::Packet packet;
-  //   packet.id++;
-  //   packet.action = HUD::Action::NONE;
-  //   manager_online = sendPacket(&packet, 0);
-
-  //   if (_online != manager_online)
-  //   {
-  //     _online = manager_online;
-  //     if (manager_online)
-  //     {
-  //       LEDs::colour = LEDs::COLOUR_GREEN;
-  //       LEDs::leds.forever();
-  //     }
-  //     else
-  //     {
-  //       LEDs::colour = LEDs::COLOUR_RED;
-  //       LEDs::leds.forever(200, 1000);
-  //     }
-  //   }
-  // }
 
   LEDs::update();
 

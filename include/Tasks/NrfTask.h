@@ -10,7 +10,7 @@
 
 #include <Types.h>
 
-namespace NrfTask
+namespace NRFTask
 {
   const int MANAGER_ID = 00;
   const int HUD_ID = 01;
@@ -25,19 +25,11 @@ namespace NrfTask
 
   // prototypes
 
-  // GenericClient</*OUT*/ VescData, /*IN*/ VescData> managerClient(/*to*/ MANAGER_ID);
   GenericClient</*OUT*/ int, /*IN*/ ManagerData> *managerClient;
 
-  void managerClientPacketAvailable_cb(uint16_t from_id, uint8_t t)
-  {
-    ManagerData data = managerClient->read();
+  void managerClientPacketAvailable_cb(uint16_t from_id, uint8_t t);
 
-    if (since_printed_rx_packet > 1000)
-    {
-      since_printed_rx_packet = 0;
-      Serial.printf("NRF received packet from Manager, id: %lu \n", data.packet_id);
-    }
-  }
+  // -----------------------------------------
 
   void setup()
   {
@@ -55,7 +47,7 @@ namespace NrfTask
     // setup
     setup();
 
-    Serial.printf("NrfTask ready\n");
+    Serial.printf("NRFTask ready\n");
 
     // work
     for (;;)
@@ -66,9 +58,21 @@ namespace NrfTask
 
         packet.packet_id++;
 
-        bool success = managerClient->sendTo(1, _last_packet_id);
+        if (xSemaphoreTake(semaphore_SPI, TICKS_50ms) == pdPASS)
+        {
+          portENTER_CRITICAL(&mmux);
 
-        Serial.printf("Send to Manager %s, id: %lu \n", success ? "OK" : "FAIL", _last_packet_id++);
+          bool success = managerClient->sendTo(1, _last_packet_id);
+
+          Serial.printf("Send to Manager %s, id: %lu \n", success ? "OK" : "FAIL", _last_packet_id++);
+          vTaskDelay(TICKS_10ms);
+          xSemaphoreGive(semaphore_SPI);
+          portEXIT_CRITICAL(&mmux);
+        }
+        else
+        {
+          Serial.printf("Failed to take semaphore: %s \n", __func__);
+        }
       }
 
       managerClient->update();
@@ -77,6 +81,29 @@ namespace NrfTask
     }
 
     vTaskDelete(NULL);
+  }
+
+  void managerClientPacketAvailable_cb(uint16_t from_id, uint8_t t)
+  {
+    if (xSemaphoreTake(semaphore_SPI, TICKS_50ms) == pdPASS)
+    {
+      portENTER_CRITICAL(&mmux);
+      ManagerData data = managerClient->read();
+      vTaskDelay(TICKS_10ms);
+      xSemaphoreGive(semaphore_SPI);
+      xQueueOverwrite(xManagerDataQueue, (void *)&data);
+      portEXIT_CRITICAL(&mmux);
+
+      if (since_printed_rx_packet > 1000)
+      {
+        since_printed_rx_packet = 0;
+        Serial.printf("NRF received packet from Manager, id: %lu \n", data.packet_id);
+      }
+    }
+    else
+    {
+      Serial.printf("Failed to take semaphore: %s \n", __func__);
+    }
   }
 
   void createTask()

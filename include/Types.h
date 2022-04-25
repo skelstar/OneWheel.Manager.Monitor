@@ -16,16 +16,16 @@ public:
   // double mosfetTemp = 0.0;
   // double motorTemp = 0.0;
   // double totalCurrentIn = 0.0;
-  double inputVoltage = 0.0;
+  // double inputVoltage = 0.0;
   // double tachometer = 0.0;
   // double tachometerAbsolut = 0.0;
 
   // double pidOutput = 0.0;
-  double pitch = 0.0;
+  // double pitch = 0.0;
   // double roll = 0.0;
   // double motorCurrent = 0.0;
   // double motorPosition = 0.0;
-  uint16_t balanceState = 0;
+  // uint16_t balanceState = 0;
   // uint16_t switchState = 0;
   // double adc1 = 0.0;
   // double adc2 = 0.0;
@@ -82,30 +82,30 @@ namespace ManagerState
     BOTH_FEET_ON_PAD,
   } State;
 
-  static const char *getState(uint8_t state)
-  {
-    switch (state)
-    {
-    case WAITING:
-      return "WAITING";
-    case HEARTBEAT:
-      return "HEARTBEAT";
-    case RUNNING:
-      return "RUNNING";
-    case DUTYCYCLE_LIMIT:
-      return "DUTYCYCLE_LIMIT";
-    case DUTYCYCLE_WARNING:
-      return "DUTYCYCLE_WARNING";
-    case REVERSE_STOP:
-      return "REVERSE_STOP";
-    case ONE_FOOT_ON_PAD:
-      return "ONE_FOOT_ON_PAD";
-    case BOTH_FEET_ON_PAD:
-      return "BOTH_FEET_ON_PAD";
-    default:
-      return "Unknown ManagerState!";
-    }
-  }
+  // static const char *getState(uint8_t state)
+  // {
+  //   switch (state)
+  //   {
+  //   case WAITING:
+  //     return "WAITING";
+  //   case HEARTBEAT:
+  //     return "HEARTBEAT";
+  //   case RUNNING:
+  //     return "RUNNING";
+  //   case DUTYCYCLE_LIMIT:
+  //     return "DUTYCYCLE_LIMIT";
+  //   case DUTYCYCLE_WARNING:
+  //     return "DUTYCYCLE_WARNING";
+  //   case REVERSE_STOP:
+  //     return "REVERSE_STOP";
+  //   case ONE_FOOT_ON_PAD:
+  //     return "ONE_FOOT_ON_PAD";
+  //   case BOTH_FEET_ON_PAD:
+  //     return "BOTH_FEET_ON_PAD";
+  //   default:
+  //     return "Unknown ManagerState!";
+  //   }
+  // }
 }
 
 namespace HUD
@@ -141,3 +141,16 @@ namespace HUD
     HUD::Action action;
   };
 }
+
+#ifndef TICKS_5ms
+const TickType_t TICKS_0ms = 0;
+const TickType_t TICKS_5ms = 5 / portTICK_PERIOD_MS;
+const TickType_t TICKS_10ms = 10 / portTICK_PERIOD_MS;
+const TickType_t TICKS_50ms = 50 / portTICK_PERIOD_MS;
+const TickType_t TICKS_100ms = 100 / portTICK_PERIOD_MS;
+const TickType_t TICKS_500ms = 500 / portTICK_PERIOD_MS;
+const TickType_t TICKS_1s = 1000 / portTICK_PERIOD_MS;
+const TickType_t TICKS_2s = 2000 / portTICK_PERIOD_MS;
+const TickType_t TICKS_3s = 3000 / portTICK_PERIOD_MS;
+const TickType_t TICKS_4s = 4000 / portTICK_PERIOD_MS;
+#endif
